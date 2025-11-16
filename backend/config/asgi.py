@@ -22,11 +22,23 @@ django_asgi_app = get_asgi_application()
 
 from sensors.routing import websocket_urlpatterns
 
-application = ProtocolTypeRouter({
-    "http": django_asgi_app,
-    "websocket": AllowedHostsOriginValidator(
+# For development, allow all origins. In production, use AllowedHostsOriginValidator
+from django.conf import settings
+
+if settings.DEBUG:
+    # Development: Allow all origins
+    websocket_application = AuthMiddlewareStack(
+        URLRouter(websocket_urlpatterns)
+    )
+else:
+    # Production: Validate origins
+    websocket_application = AllowedHostsOriginValidator(
         AuthMiddlewareStack(
             URLRouter(websocket_urlpatterns)
         )
-    ),
+    )
+
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    "websocket": websocket_application,
 })
