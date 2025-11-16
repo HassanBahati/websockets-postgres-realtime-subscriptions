@@ -1,6 +1,6 @@
 # Websockets Postres Realtime Subscriptions
 
-Complete real-time sensor data system using Django + PostgreSQL LISTEN/NOTIFY + WebSockets + Remix.
+Complete real-time data system using Django + PostgreSQL LISTEN/NOTIFY + WebSockets + Remix.
 
 ## Architecture
 
