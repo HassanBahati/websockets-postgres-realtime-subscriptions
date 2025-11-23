@@ -6,8 +6,6 @@ interface SensorData {
   value: number;
   timestamp: string;
   metadata: Record<string, any>;
-  created_at: string;
-  updated_at: string;
 }
 
 interface UseWebSocketOptions {
@@ -32,22 +30,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
-  const [latestData, setLatestData] = useState<SensorData | null>(() => {
-    // Load from localStorage on initial mount for instant display
-    // This is not WebSocket data, so hasReceivedWebSocketData stays false
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('latestSensorData');
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          console.error('Error parsing stored sensor data:', e);
-        }
-      }
-    }
-    return null;
-  });
-  const [hasReceivedWebSocketData, setHasReceivedWebSocketData] = useState(false);
+  const [latestData, setLatestData] = useState<SensorData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -91,11 +74,6 @@ export function useWebSocket(options: UseWebSocketOptions) {
             const parsed = JSON.parse(event.data);
             const sensorData: SensorData = parsed.data || parsed;
             setLatestData(sensorData);
-            setHasReceivedWebSocketData(true); // Mark that we've received WebSocket data
-            // Persist to localStorage for page reload persistence
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('latestSensorData', JSON.stringify(sensorData));
-            }
             onMessageRef.current?.(sensorData);
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -160,24 +138,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, reconnect]);
 
-  // Function to update data from API calls (only if no WebSocket data received)
-  const updateDataFromAPI = (data: SensorData) => {
-    // Only update if we haven't received WebSocket data yet
-    if (!hasReceivedWebSocketData) {
-      setLatestData(data);
-      // Persist to localStorage for page reload persistence
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('latestSensorData', JSON.stringify(data));
-      }
-    }
-  };
-
   return {
     isConnected,
     latestData,
-    hasReceivedWebSocketData,
     error,
-    updateDataFromAPI,
     send: (data: string | object) => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(typeof data === 'string' ? data : JSON.stringify(data));
