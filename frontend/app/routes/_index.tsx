@@ -2,7 +2,7 @@ import { useWebSocket } from '~/hooks/useWebSocket';
 
 export default function Index() {
   const { isConnected, latestData, error } = useWebSocket({
-    url: 'ws://localhost:8000/ws/sensors/',
+    url: 'ws://localhost:8000/ws/sensor-readings/',
     onMessage: (data) => {
       console.log('Received sensor update:', data);
     },
@@ -63,7 +63,7 @@ export default function Index() {
         <div style={{ padding: '2rem', textAlign: 'center', color: '#6c757d' }}>
           Waiting for sensor data...
           <br />
-          <small>Send a POST request to /api/sensors/ to see real-time updates</small>
+          <small>Send a POST request to /api/v1/sensors-readings/ to see real-time updates</small>
         </div>
       )}
 
@@ -75,7 +75,7 @@ export default function Index() {
           <li>Send a POST request to create a sensor reading:</li>
         </ol>
         <pre style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '4px', overflow: 'auto' }}>
-{`curl -X POST http://localhost:8000/api/sensors/ \\
+{`curl -X POST http://localhost:8000/api/v1/sensors-readings/ \\
   -H "Content-Type: application/json" \\
   -d '{
     "sensor_id": "sensor1",
