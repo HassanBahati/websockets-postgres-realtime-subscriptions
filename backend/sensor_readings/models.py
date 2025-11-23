@@ -7,6 +7,9 @@ class SensorReading(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     metadata = models.JSONField(default=dict, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         db_table = 'sensor_readings'
         ordering = ['-timestamp']
