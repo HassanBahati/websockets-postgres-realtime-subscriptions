@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
 interface SensorData {
   id: number;
@@ -138,15 +138,19 @@ export function useWebSocket(options: UseWebSocketOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, reconnect]);
 
-  return {
+  // Memoize send function to prevent unnecessary re-renders
+  const send = useCallback((data: string | object) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(typeof data === 'string' ? data : JSON.stringify(data));
+    }
+  }, []);
+
+  // Memoize return object to prevent unnecessary re-renders in consuming components
+  return useMemo(() => ({
     isConnected,
     latestData,
     error,
-    send: (data: string | object) => {
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(typeof data === 'string' ? data : JSON.stringify(data));
-      }
-    },
-  };
+    send,
+  }), [isConnected, latestData, error, send]);
 }
 
