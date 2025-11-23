@@ -1,72 +1,61 @@
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import SensorReading
+from .serializers import SensorReadingSerializer
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def create_sensor_reading(request):
+class SensorReadingListCreateView(APIView):
     """
-    API endpoint to create a new sensor reading.
+    List sensor readings (GET) or create a new one (POST).
     
-    Expected JSON payload:
-    {
-        "sensor_id": "sensor1",
-        "value": 25.5,
-        "metadata": {"unit": "celsius", "location": "room1"}  # optional
-    }
+    GET /api/v1/sensors/
+    - Query parameters:
+      - sensor_id: Filter by sensor ID
+      - limit: Limit number of results (default: 100)
+    
+    POST /api/v1/sensors/
+    - Request body:
+      {
+          "sensor_id": "sensor1",
+          "value": 25.5,
+          "metadata": {"unit": "celsius", "location": "room1"}  // optional
+      }
     """
-    try:
-        data = json.loads(request.body)
+    
+    def get(self, request):
+        """List sensor readings with optional filtering"""
+        queryset = SensorReading.objects.all()
         
-        sensor_id = data.get('sensor_id')
-        value = data.get('value')
-        metadata = data.get('metadata', {})
+        # Filter by sensor_id if provided
+        sensor_id = request.query_params.get('sensor_id', None)
+        if sensor_id:
+            queryset = queryset.filter(sensor_id=sensor_id)
         
-        if not sensor_id:
-            return JsonResponse(
-                {'error': 'sensor_id is required'}, 
-                status=400
+        # Limit results
+        limit = int(request.query_params.get('limit', 100))
+        queryset = queryset[:limit]
+        
+        serializer = SensorReadingSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        """Create a new sensor reading"""
+        serializer = SensorReadingSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Create the sensor reading
+            # This will trigger the PostgreSQL trigger which sends NOTIFY
+            reading = serializer.save()
+            
+            return Response(
+                {
+                    **serializer.data,
+                    'message': 'Sensor reading created successfully',
+                    'success': True
+                },
+                status=status.HTTP_201_CREATED
             )
         
-        if value is None:
-            return JsonResponse(
-                {'error': 'value is required'}, 
-                status=400
-            )
-        
-        # Create the sensor reading
-        # This will trigger the PostgreSQL trigger which sends NOTIFY
-        reading = SensorReading.objects.create(
-            sensor_id=sensor_id,
-            value=float(value),
-            metadata=metadata
-        )
-        
-        return JsonResponse({
-            'id': reading.id,
-            'sensor_id': reading.sensor_id,
-            'value': reading.value,
-            'timestamp': reading.timestamp.isoformat(),
-            'metadata': reading.metadata,
-            'message': 'Sensor reading created successfully'
-        }, status=201)
-        
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {'error': 'Invalid JSON'}, 
-            status=400
-        )
-    except ValueError as e:
-        return JsonResponse(
-            {'error': f'Invalid value: {str(e)}'}, 
-            status=400
-        )
-    except Exception as e:
-        return JsonResponse(
-            {'error': str(e)}, 
-            status=500
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
