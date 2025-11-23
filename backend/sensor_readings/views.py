@@ -25,7 +25,7 @@ class SensorReadingListCreateView(APIView):
     
     def get(self, request):
         """List sensor readings with optional filtering"""
-        queryset = SensorReading.objects.all()
+        queryset = SensorReading.objects.all().order_by('-timestamp')
         
         # Filter by sensor_id if provided
         sensor_id = request.query_params.get('sensor_id', None)
