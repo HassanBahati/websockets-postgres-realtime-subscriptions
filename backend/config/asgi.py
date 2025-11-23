@@ -20,7 +20,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 # is populated before importing code that may import ORM models.
 django_asgi_app = get_asgi_application()
 
-from sensors.routing import websocket_urlpatterns
+from sensor_readings.routing import websocket_urlpatterns
 
 # For development, allow all origins. In production, use AllowedHostsOriginValidator
 from django.conf import settings

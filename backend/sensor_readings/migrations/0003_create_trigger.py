@@ -38,7 +38,7 @@ def drop_trigger(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sensors', '0002_initial'),
+        ('sensor_readings', '0002_initial'),
     ]
 
     operations = [
