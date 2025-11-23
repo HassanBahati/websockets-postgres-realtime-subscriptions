@@ -5,10 +5,14 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 logger = logging.getLogger(__name__)
 
 
-class SensorConsumer(AsyncWebsocketConsumer):
+class SensorReadingsConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        logger.info(f"WebSocket connection attempt from: {self.scope.get('client', 'unknown')}")
+        logger.info(f"WebSocket path: {self.scope.get('path', 'unknown')}")
+        
         # Accept the connection first, before trying to use channel layer
         await self.accept()
+        logger.info(f"WebSocket connection accepted: {self.channel_name}")
         
         try:
             # Join sensor_group
@@ -21,7 +25,7 @@ class SensorConsumer(AsyncWebsocketConsumer):
             else:
                 logger.warning("No channel layer available, connection accepted without group")
         except Exception as e:
-            logger.error(f"Error joining group (connection still active): {e}")
+            logger.error(f"Error joining group (connection still active): {e}", exc_info=True)
             # Don't close - connection is already accepted
 
     async def disconnect(self, close_code):

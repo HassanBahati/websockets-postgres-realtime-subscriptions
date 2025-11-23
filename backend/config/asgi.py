@@ -26,12 +26,11 @@ from sensor_readings.routing import websocket_urlpatterns
 from django.conf import settings
 
 if settings.DEBUG:
-    # Development: Allow all origins
-    websocket_application = AuthMiddlewareStack(
-        URLRouter(websocket_urlpatterns)
-    )
+    # Development: Allow all origins and anonymous WebSocket connections
+    # Skip AuthMiddlewareStack to allow unauthenticated connections
+    websocket_application = URLRouter(websocket_urlpatterns)
 else:
-    # Production: Validate origins
+    # Production: Validate origins and require authentication
     websocket_application = AllowedHostsOriginValidator(
         AuthMiddlewareStack(
             URLRouter(websocket_urlpatterns)
